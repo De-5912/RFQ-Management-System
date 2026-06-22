@@ -1,0 +1,331 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  PURCHASE_EXECUTIVE
+  PURCHASE_MANAGER
+  HOD
+  FINANCE
+  DEPARTMENT_REQUESTER
+  VENDOR
+}
+
+enum RFQStatus {
+  DRAFT
+  RFQ_PREPARED
+  RFQ_SENT
+  QUOTATION_AWAITED
+  QUOTATION_RECEIVED
+  UNDER_COMPARISON
+  NEGOTIATION
+  FINAL_VENDOR_SELECTED
+  APPROVED
+  PO_CREATED
+  CLOSED
+  CANCELLED
+}
+
+enum VendorApprovalStatus {
+  APPROVED
+  CONDITIONAL
+  BLOCKED
+  PENDING
+}
+
+enum QuotationStatus {
+  DRAFT
+  SUBMITTED
+  LOCKED
+  WITHDRAWN
+}
+
+enum TechnicalCompliance {
+  COMPLIANT
+  PARTIAL
+  NON_COMPLIANT
+  NOT_APPLICABLE
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AttachmentEntity {
+  RFQ
+  QUOTATION
+  COMPARISON
+  APPROVAL
+  EMAIL_SCREENSHOT
+  PO
+}
+
+enum EmailStatus {
+  SENT
+  FAILED
+  LOGGED_ONLY
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         Role
+  department   String?
+  phone        String?
+  vendorId     String?
+  vendor       Vendor?   @relation(fields: [vendorId], references: [id])
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  sessions        Session[]
+  createdRfqs     RFQ[]        @relation("RFQCreatedBy")
+  auditLogs       AuditLog[]
+  approvals       Approval[]   @relation("ApprovalApprover")
+  uploadedFiles   Attachment[] @relation("AttachmentUploader")
+  sentEmails      EmailLog[]   @relation("EmailSender")
+  reportDownloads ReportDownloadLog[]
+  submittedQuotes Quotation[]  @relation("QuotationSubmittedBy")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Vendor {
+  id              String               @id @default(cuid())
+  companyName     String
+  contactPerson   String
+  email           String               @unique
+  phone           String
+  address         String
+  gstNumber       String?
+  pan             String?
+  category        String
+  approvedStatus  VendorApprovalStatus @default(PENDING)
+  pastRating      Decimal              @default(0) @db.Decimal(4, 2)
+  paymentTerms    String?
+  leadTimeHistory String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  deletedAt       DateTime?
+
+  users      User[]
+  rfqs       RFQVendor[]
+  quotations Quotation[]
+  selectedIn RFQ[]        @relation("FinalVendor")
+  approvals  Approval[]   @relation("ApprovalSelectedVendor")
+  emails     EmailLog[]
+}
+
+model RFQ {
+  id                  String    @id @default(cuid())
+  rfqNumber           String    @unique
+  rfqDate             DateTime
+  deadline            DateTime
+  department          String
+  requesterName       String
+  description         String
+  requiredDeliveryDate DateTime?
+  deliveryLocation    String
+  technicalSpecification String?
+  preferredMake       String?
+  paymentTerms        String?
+  warrantyRequirement String?
+  taxes               String?
+  remarks             String?
+  status              RFQStatus @default(DRAFT)
+  createdById         String
+  createdBy           User      @relation("RFQCreatedBy", fields: [createdById], references: [id])
+  finalVendorId       String?
+  finalVendor         Vendor?   @relation("FinalVendor", fields: [finalVendorId], references: [id])
+  poNumber            String?
+  poCreatedAt         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
+
+  items       RFQItem[]
+  vendors     RFQVendor[]
+  quotations  Quotation[]
+  attachments Attachment[]
+  approvals   Approval[]
+  emailLogs   EmailLog[]
+}
+
+model RFQItem {
+  id                     String   @id @default(cuid())
+  rfqId                  String
+  rfq                    RFQ      @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  lineNumber             Int
+  description            String
+  partNumber             String?
+  quantity               Decimal  @db.Decimal(14, 3)
+  uom                    String
+  technicalSpecification String?
+  preferredMake          String?
+  remarks                String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  quotationItems QuotationItem[]
+
+  @@unique([rfqId, lineNumber])
+}
+
+model RFQVendor {
+  id          String    @id @default(cuid())
+  rfqId       String
+  rfq         RFQ       @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  vendorId    String
+  vendor      Vendor    @relation(fields: [vendorId], references: [id])
+  assignedAt  DateTime  @default(now())
+  emailSentAt DateTime?
+  viewedAt    DateTime?
+  notes       String?
+
+  @@unique([rfqId, vendorId])
+}
+
+model Quotation {
+  id                  String              @id @default(cuid())
+  rfqId               String
+  rfq                 RFQ                 @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  vendorId            String
+  vendor              Vendor              @relation(fields: [vendorId], references: [id])
+  submittedById       String?
+  submittedBy         User?               @relation("QuotationSubmittedBy", fields: [submittedById], references: [id])
+  status              QuotationStatus     @default(DRAFT)
+  baseTotal           Decimal             @default(0) @db.Decimal(14, 2)
+  taxTotal            Decimal             @default(0) @db.Decimal(14, 2)
+  freightCost         Decimal             @default(0) @db.Decimal(14, 2)
+  packingCost         Decimal             @default(0) @db.Decimal(14, 2)
+  discount            Decimal             @default(0) @db.Decimal(14, 2)
+  leadTimeDays        Int?
+  paymentTerms        String?
+  warranty            String?
+  validityDate        DateTime?
+  technicalCompliance TechnicalCompliance @default(NOT_APPLICABLE)
+  remarks             String?
+  submittedAt         DateTime?
+  lastEditedAt        DateTime?
+  lockedAt            DateTime?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  deletedAt           DateTime?
+
+  items       QuotationItem[]
+  attachments Attachment[]
+
+  @@unique([rfqId, vendorId])
+}
+
+model QuotationItem {
+  id          String    @id @default(cuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  rfqItemId   String?
+  rfqItem     RFQItem?   @relation(fields: [rfqItemId], references: [id])
+  description String
+  quantity    Decimal   @db.Decimal(14, 3)
+  unitPrice   Decimal   @db.Decimal(14, 2)
+  totalPrice  Decimal   @db.Decimal(14, 2)
+  taxAmount   Decimal   @default(0) @db.Decimal(14, 2)
+  remarks     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Attachment {
+  id          String           @id @default(cuid())
+  fileName    String
+  storagePath String
+  mimeType    String
+  sizeBytes   Int
+  entityType  AttachmentEntity
+  rfqId       String?
+  rfq         RFQ?             @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  quotationId String?
+  quotation   Quotation?       @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  approvalId  String?
+  approval    Approval?        @relation(fields: [approvalId], references: [id], onDelete: Cascade)
+  uploadedById String?
+  uploadedBy   User?           @relation("AttachmentUploader", fields: [uploadedById], references: [id])
+  createdAt   DateTime         @default(now())
+}
+
+model Approval {
+  id               String         @id @default(cuid())
+  rfqId            String
+  rfq              RFQ            @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  approverId       String
+  approver         User           @relation("ApprovalApprover", fields: [approverId], references: [id])
+  selectedVendorId String?
+  selectedVendor   Vendor?        @relation("ApprovalSelectedVendor", fields: [selectedVendorId], references: [id])
+  status           ApprovalStatus @default(PENDING)
+  comments         String?
+  decidedAt        DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  attachments Attachment[]
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  userRole   Role?
+  action     String
+  entityType String
+  entityId   String
+  oldValue   Json?
+  newValue   Json?
+  ipAddress  String?
+  userAgent  String?
+  details    String?
+  createdAt  DateTime @default(now())
+}
+
+model EmailLog {
+  id                String      @id @default(cuid())
+  rfqId             String
+  rfq               RFQ         @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  vendorId          String
+  vendor            Vendor      @relation(fields: [vendorId], references: [id])
+  toEmail           String
+  subject           String
+  body              String
+  status            EmailStatus
+  providerMessageId String?
+  error             String?
+  sentById          String?
+  sentBy            User?       @relation("EmailSender", fields: [sentById], references: [id])
+  sentAt            DateTime    @default(now())
+}
+
+model ReportDownloadLog {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  reportType String
+  filters    Json?
+  createdAt  DateTime @default(now())
+}
