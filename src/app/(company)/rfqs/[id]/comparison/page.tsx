@@ -53,7 +53,7 @@ export default async function ComparisonPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Comparison: ${rfq.rfqNumber}`}
+        title={`Quotation comparison: ${rfq.rfqNumber}`}
         description="Ranking uses base quote price only. Tax, freight, packing, and other charges are visible but excluded from L1/L2/L3 ranking."
       />
 

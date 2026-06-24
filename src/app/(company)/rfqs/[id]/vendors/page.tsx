@@ -24,7 +24,7 @@ export default async function RFQVendorsPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Select vendors for ${rfq.rfqNumber}`}
+        title={`Assign and email vendors for ${rfq.rfqNumber}`}
         description="Selected vendors are linked to this RFQ and RFQ emails are sent or locally logged through the email service."
       />
       <form action={assignVendorsAction} className="rounded-lg border border-zinc-200 bg-white shadow-sm">

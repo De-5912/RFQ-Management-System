@@ -38,6 +38,11 @@ export default async function RFQDetailPage({
     return <PageHeader title="RFQ not found" description="You may not have access to this RFQ." />;
   }
 
+  const canManageRfqs = can(user.role, "manage_rfqs");
+  const canAssignVendors = can(user.role, "assign_vendors");
+  const canCompare = can(user.role, "view_comparison");
+  const canUpdatePo = can(user.role, "update_po_status");
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -45,18 +50,24 @@ export default async function RFQDetailPage({
         description={rfq.description}
         actions={
           <>
+            {canManageRfqs ? (
             <ButtonLink href={`/rfqs/${rfq.id}/edit`} variant="secondary">
               <Pencil className="h-4 w-4" />
-              Edit
+              Edit RFQ
             </ButtonLink>
+            ) : null}
+            {canAssignVendors ? (
             <ButtonLink href={`/rfqs/${rfq.id}/vendors`} variant="secondary">
               <Store className="h-4 w-4" />
-              Vendors
+              Assign / Email Vendors
             </ButtonLink>
+            ) : null}
+            {canCompare ? (
             <ButtonLink href={`/rfqs/${rfq.id}/comparison`}>
               <Scale className="h-4 w-4" />
-              Compare
+              Compare Quotes
             </ButtonLink>
+            ) : null}
           </>
         }
       />
@@ -108,9 +119,10 @@ export default async function RFQDetailPage({
         </section>
 
         <section className="space-y-4">
+          {canManageRfqs ? (
           <form action={changeRFQStatusAction} className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
             <input type="hidden" name="rfqId" value={rfq.id} />
-            <Field label="Workflow status">
+            <Field label="RFQ workflow status">
               <select className={selectClass} name="status" defaultValue={rfq.status}>
                 {editableStatuses.map((status) => (
                   <option key={status} value={status}>
@@ -120,18 +132,19 @@ export default async function RFQDetailPage({
               </select>
             </Field>
             <div className="mt-4">
-              <ConfirmSubmitButton message="Change RFQ status?">Update status</ConfirmSubmitButton>
+              <ConfirmSubmitButton message="Change RFQ status?">Save workflow status</ConfirmSubmitButton>
             </div>
           </form>
+          ) : null}
 
-          {can(user.role, "update_po_status") ? (
+          {canUpdatePo ? (
             <form action={updatePOStatusAction} className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
               <input type="hidden" name="rfqId" value={rfq.id} />
               <Field label="SAP PO number">
                 <input className={inputClass} name="poNumber" defaultValue={rfq.poNumber ?? ""} />
               </Field>
               <div className="mt-4">
-                <ConfirmSubmitButton message="Mark PO created for this RFQ?">Update PO</ConfirmSubmitButton>
+                <ConfirmSubmitButton message="Mark PO created for this RFQ?">Record SAP PO</ConfirmSubmitButton>
               </div>
             </form>
           ) : null}
@@ -174,9 +187,11 @@ export default async function RFQDetailPage({
         <section className="rounded-lg border border-zinc-200 bg-white shadow-sm">
           <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-4">
             <h2 className="font-semibold text-zinc-950">Assigned Vendors</h2>
+            {canAssignVendors ? (
             <Link href={`/rfqs/${rfq.id}/vendors`} className="text-sm font-semibold text-zinc-700 hover:text-zinc-950">
-              Manage
+              Assign / email
             </Link>
+            ) : null}
           </div>
           <div className="divide-y divide-zinc-100">
             {rfq.vendors.map(({ vendor, emailSentAt }) => (
@@ -195,7 +210,7 @@ export default async function RFQDetailPage({
 
         <section className="rounded-lg border border-zinc-200 bg-white shadow-sm">
           <div className="border-b border-zinc-200 px-5 py-4">
-            <h2 className="font-semibold text-zinc-950">Quotations</h2>
+            <h2 className="font-semibold text-zinc-950">Vendor quotation status</h2>
           </div>
           <div className="divide-y divide-zinc-100">
             {rfq.quotations.map((quote) => (
@@ -203,7 +218,9 @@ export default async function RFQDetailPage({
                 <div>
                   <div className="font-medium text-zinc-950">{quote.vendor.companyName}</div>
                   <div className="text-xs text-zinc-500">
-                    Base quote {formatMoney(quote.baseTotal)} / lead time {quote.leadTimeDays ?? "-"} days
+                    {canCompare
+                      ? `Base quote ${formatMoney(quote.baseTotal)} / lead time ${quote.leadTimeDays ?? "-"} days`
+                      : `Submitted ${formatDateTime(quote.submittedAt)}`}
                   </div>
                 </div>
                 <Badge tone={statusTone(quote.status)}>{formatStatus(quote.status)}</Badge>

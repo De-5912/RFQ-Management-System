@@ -15,7 +15,10 @@ export default async function ApprovalsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Approvals" description="HOD approval queue for final vendor selections." />
+      <PageHeader
+        title="HOD Approval Queue"
+        description="Review final vendor selections after quotation comparison and record approval or rejection decisions."
+      />
       <div className="space-y-4">
         {approvals.map((approval) => (
           <section key={approval.id} className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">

@@ -69,8 +69,8 @@ export default async function ReportsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Reports"
-        description="Operational RFQ reporting. Download actions are logged for audit visibility."
+        title="RFQ Reports"
+        description="Role-restricted RFQ reporting for open items, closures, pending quotations, lead time, delays, and savings views."
       />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <StatCard label="Open RFQs" value={openRfqs} />

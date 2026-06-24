@@ -25,7 +25,10 @@ export default async function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Users and Roles" description="Role-based access is centralized so status permissions can be adjusted later without rewriting pages." />
+      <PageHeader
+        title="Users & Roles"
+        description="Create local users and assign procurement roles. Permission rules remain centralized for later workflow tuning."
+      />
       <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
         <h2 className="font-semibold text-zinc-950">Create user</h2>
         <form action={createUserAction} className="mt-4 grid gap-4 md:grid-cols-3">

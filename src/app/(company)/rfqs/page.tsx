@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { Badge, ButtonLink, EmptyState, PageHeader, statusTone } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { formatDate, formatStatus } from "@/lib/format";
+import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { companyRfqWhere } from "@/lib/rfq-access";
 
@@ -13,6 +14,7 @@ export default async function RFQListPage({
 }) {
   const user = await requireUser();
   const { q } = await searchParams;
+  const canPrepareRfqs = can(user.role, "manage_rfqs");
   const where = {
     ...companyRfqWhere(user),
     ...(q
@@ -35,13 +37,15 @@ export default async function RFQListPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="RFQs"
-        description="Create, assign vendors, track quotation status, compare offers, and monitor approval/PO progress."
+        title="RFQ Workspace"
+        description="Track each RFQ from preparation through vendor assignment, quotation receipt, comparison, approval, PO update, and closure."
         actions={
+          canPrepareRfqs ? (
           <ButtonLink href="/rfqs/new">
             <Plus className="h-4 w-4" />
-            New RFQ
+            Prepare RFQ
           </ButtonLink>
+          ) : null
         }
       />
 
@@ -60,8 +64,12 @@ export default async function RFQListPage({
       {rfqs.length === 0 ? (
         <EmptyState
           title="No RFQs found"
-          description="Create the first RFQ or adjust your search filters."
-          action={<ButtonLink href="/rfqs/new">Create RFQ</ButtonLink>}
+          description="Adjust your search filters or prepare a new RFQ if your role allows it."
+          action={
+            canPrepareRfqs ? (
+              <ButtonLink href="/rfqs/new">Prepare RFQ</ButtonLink>
+            ) : null
+          }
         />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white shadow-sm">
@@ -71,10 +79,10 @@ export default async function RFQListPage({
                 <th className="px-5 py-3">RFQ</th>
                 <th className="px-5 py-3">Department</th>
                 <th className="px-5 py-3">Deadline</th>
-                <th className="px-5 py-3">Vendors</th>
-                <th className="px-5 py-3">Quotes</th>
+                <th className="px-5 py-3">Assigned vendors</th>
+                <th className="px-5 py-3">Vendor quotes</th>
                 <th className="px-5 py-3">Final vendor</th>
-                <th className="px-5 py-3">Status</th>
+                <th className="px-5 py-3">Workflow status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">

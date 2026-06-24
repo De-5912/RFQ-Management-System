@@ -14,24 +14,71 @@ import {
 import { logoutAction } from "@/app/actions/auth";
 import { CurrentUser } from "@/lib/auth";
 import { formatRole } from "@/lib/format";
+import { can, Permission } from "@/lib/permissions";
 import { ToastFromSearch } from "@/components/toast-from-search";
 
-const companyNav = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  anyPermissions?: Permission[];
+};
+
+const companyNav: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/rfqs", label: "RFQs", icon: ClipboardList },
-  { href: "/vendors", label: "Vendors", icon: Store },
-  { href: "/approvals", label: "Approvals", icon: ShieldCheck },
-  { href: "/reports", label: "Reports", icon: BarChart3 },
-  { href: "/audit-logs", label: "Audit Logs", icon: ScrollText },
-  { href: "/settings/users", label: "Users", icon: Users },
+  {
+    href: "/rfqs",
+    label: "RFQ Workspace",
+    icon: ClipboardList,
+    anyPermissions: ["manage_rfqs", "view_comparison"],
+  },
+  {
+    href: "/vendors",
+    label: "Vendor Master",
+    icon: Store,
+    anyPermissions: ["manage_vendors"],
+  },
+  {
+    href: "/approvals",
+    label: "HOD Approvals",
+    icon: ShieldCheck,
+    anyPermissions: ["approve_vendor_selection"],
+  },
+  {
+    href: "/reports",
+    label: "Reports",
+    icon: BarChart3,
+    anyPermissions: ["download_reports"],
+  },
+  {
+    href: "/audit-logs",
+    label: "Audit Trail",
+    icon: ScrollText,
+    anyPermissions: ["view_audit_logs"],
+  },
+  {
+    href: "/settings/users",
+    label: "Users & Roles",
+    icon: Users,
+    anyPermissions: ["manage_users"],
+  },
 ];
 
-const vendorNav = [
+const vendorNav: NavItem[] = [
   { href: "/vendor/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/vendor/rfqs", label: "Assigned RFQs", icon: FileClock },
-  { href: "/vendor/quotations", label: "Quotations", icon: ClipboardList },
+  { href: "/vendor/quotations", label: "My Quotations", icon: ClipboardList },
   { href: "/vendor/profile", label: "Profile", icon: Settings },
 ];
+
+function visibleNavItems(user: CurrentUser, mode: "company" | "vendor") {
+  const nav = mode === "vendor" ? vendorNav : companyNav;
+
+  return nav.filter((item) => {
+    if (!item.anyPermissions) return true;
+    return item.anyPermissions.some((permission) => can(user.role, permission));
+  });
+}
 
 export function AppShell({
   user,
@@ -42,7 +89,7 @@ export function AppShell({
   mode: "company" | "vendor";
   children: React.ReactNode;
 }) {
-  const nav = mode === "vendor" ? vendorNav : companyNav;
+  const nav = visibleNavItems(user, mode);
 
   return (
     <div className="min-h-screen bg-zinc-100 text-zinc-950">
@@ -90,6 +137,18 @@ export function AppShell({
               </button>
             </form>
           </div>
+          <nav className="mt-3 flex gap-2 overflow-x-auto lg:hidden">
+            {nav.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-xs font-semibold text-zinc-700"
+              >
+                <item.icon className="h-3.5 w-3.5" />
+                {item.label}
+              </Link>
+            ))}
+          </nav>
         </header>
         <main className="mx-auto max-w-7xl px-4 py-6 lg:px-8">{children}</main>
       </div>

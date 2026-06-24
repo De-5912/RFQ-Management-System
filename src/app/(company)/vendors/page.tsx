@@ -18,7 +18,7 @@ export default async function VendorsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Vendor Master"
-        description="Local vendor database for this prototype. SAP vendor master integration can be added later."
+        description="Maintain local vendor records used for RFQ assignment, email dispatch, and quotation comparison."
         actions={
           can(user.role, "manage_vendors") ? (
             <ButtonLink href="/vendors/new">

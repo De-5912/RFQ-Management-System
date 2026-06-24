@@ -13,7 +13,10 @@ export default async function AuditLogsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Audit Logs" description="Immutable action trail for logins, RFQs, quotations, approvals, emails, attachments, and report downloads." />
+      <PageHeader
+        title="Audit Trail"
+        description="Immutable action trail for logins, RFQs, quotations, approvals, emails, attachments, and report downloads."
+      />
       <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white shadow-sm">
         <table className="w-full min-w-[1000px] text-left text-sm">
           <thead className="bg-zinc-50 text-xs uppercase text-zinc-500">
