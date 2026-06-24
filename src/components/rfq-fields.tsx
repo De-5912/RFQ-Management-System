@@ -1,5 +1,6 @@
 import { RFQ, RFQItem } from "@prisma/client";
 import { Field, inputClass, selectClass, textareaClass } from "@/components/ui";
+import { fallbackDepartments, fallbackItemServices } from "@/lib/master-data";
 
 type RFQWithItems = RFQ & { items: RFQItem[] };
 
@@ -13,14 +14,22 @@ function dateTimeValue(date?: Date | string | null) {
   return new Date(date).toISOString().slice(0, 16);
 }
 
-export function RFQFields({ rfq }: { rfq?: RFQWithItems | null }) {
+export function RFQFields({
+  rfq,
+  departments = fallbackDepartments,
+  itemServices = fallbackItemServices,
+}: {
+  rfq?: RFQWithItems | null;
+  departments?: string[];
+  itemServices?: string[];
+}) {
   const rows = Array.from({ length: Math.max(6, rfq?.items.length ?? 0) });
 
   return (
     <div className="space-y-6">
       {rfq ? <input type="hidden" name="rfqId" value={rfq.id} /> : null}
       <section className="rounded-lg border border-zinc-200 bg-white p-5">
-        <h2 className="text-base font-semibold text-zinc-950">RFQ Details</h2>
+        <h2 className="text-base font-semibold text-zinc-950">RFQ Request Details</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <Field label="RFQ date">
             <input
@@ -41,12 +50,13 @@ export function RFQFields({ rfq }: { rfq?: RFQWithItems | null }) {
             />
           </Field>
           <Field label="Department">
-            <input
-              className={inputClass}
-              name="department"
-              defaultValue={rfq?.department ?? "Maintenance"}
-              required
-            />
+            <select className={selectClass} name="department" defaultValue={rfq?.department ?? departments[0]} required>
+              {departments.map((department) => (
+                <option key={department} value={department}>
+                  {department}
+                </option>
+              ))}
+            </select>
           </Field>
           <Field label="Requester name">
             <input
@@ -74,14 +84,26 @@ export function RFQFields({ rfq }: { rfq?: RFQWithItems | null }) {
           </Field>
           <div className="md:col-span-2">
             <Field label="Item/service description">
-              <textarea
-                className={textareaClass}
+              <input
+                className={inputClass}
+                list="item-service-options"
                 name="description"
                 defaultValue={rfq?.description ?? ""}
                 required
               />
+              <datalist id="item-service-options">
+                {itemServices.map((item) => (
+                  <option key={item} value={item} />
+                ))}
+              </datalist>
             </Field>
           </div>
+          <Field label="RFQ category">
+            <select className={selectClass} name="rfqType" defaultValue={rfq?.rfqType ?? "NORMAL"}>
+              <option value="NORMAL">Normal RFQ - 3 to 10 vendors</option>
+              <option value="SPECIAL">Special RFQ - OEM / authorized / customized vendor</option>
+            </select>
+          </Field>
           <Field label="Preferred make/brand">
             <input
               className={inputClass}
@@ -107,6 +129,16 @@ export function RFQFields({ rfq }: { rfq?: RFQWithItems | null }) {
             <input className={inputClass} name="taxes" defaultValue={rfq?.taxes ?? ""} />
           </Field>
           <div className="md:col-span-2">
+            <Field label="Special vendor justification">
+              <textarea
+                className={textareaClass}
+                name="specialVendorJustification"
+                defaultValue={rfq?.specialVendorJustification ?? ""}
+                placeholder="Required when a single OEM, authorized, or customized vendor is used."
+              />
+            </Field>
+          </div>
+          <div className="md:col-span-2">
             <Field label="Technical specification">
               <textarea
                 className={textareaClass}
@@ -129,7 +161,7 @@ export function RFQFields({ rfq }: { rfq?: RFQWithItems | null }) {
           </Field>
           <Field label="Initial status">
             <select className={selectClass} name="status" defaultValue={rfq?.status ?? "RFQ_PREPARED"} disabled>
-              <option value="RFQ_PREPARED">RFQ Prepared</option>
+              <option value="RFQ_PREPARED">RFQ approval pending</option>
             </select>
           </Field>
         </div>
@@ -137,8 +169,8 @@ export function RFQFields({ rfq }: { rfq?: RFQWithItems | null }) {
 
       <section className="rounded-lg border border-zinc-200 bg-white p-5">
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-base font-semibold text-zinc-950">RFQ Items</h2>
-          <span className="text-xs text-zinc-500">Fill one or more rows</span>
+          <h2 className="text-base font-semibold text-zinc-950">RFQ Item Lines</h2>
+          <span className="text-xs text-zinc-500">Fill one or more item/service rows</span>
         </div>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-[1100px] w-full text-left text-sm">
