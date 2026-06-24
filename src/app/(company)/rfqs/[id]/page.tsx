@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FileText, Mail, Pencil, Scale, Send, Store } from "lucide-react";
 import {
+  approveRFQForReleaseAction,
   changeRFQStatusAction,
   updatePOStatusAction,
 } from "@/app/actions/rfqs";
@@ -40,6 +41,7 @@ export default async function RFQDetailPage({
 
   const canManageRfqs = can(user.role, "manage_rfqs");
   const canAssignVendors = can(user.role, "assign_vendors");
+  const canApproveRFQ = can(user.role, "approve_rfqs");
   const canCompare = can(user.role, "view_comparison");
   const canUpdatePo = can(user.role, "update_po_status");
 
@@ -56,10 +58,10 @@ export default async function RFQDetailPage({
               Edit RFQ
             </ButtonLink>
             ) : null}
-            {canAssignVendors ? (
+            {canAssignVendors && rfq.rfqApprovalStatus === "APPROVED" ? (
             <ButtonLink href={`/rfqs/${rfq.id}/vendors`} variant="secondary">
               <Store className="h-4 w-4" />
-              Assign / Email Vendors
+              Release to Vendors
             </ButtonLink>
             ) : null}
             {canCompare ? (
@@ -76,6 +78,9 @@ export default async function RFQDetailPage({
         <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm lg:col-span-2">
           <div className="flex flex-wrap items-center gap-3">
             <Badge tone={statusTone(rfq.status)}>{formatStatus(rfq.status)}</Badge>
+            <Badge tone={statusTone(rfq.rfqApprovalStatus)}>
+              Release approval: {formatStatus(rfq.rfqApprovalStatus)}
+            </Badge>
             <span className="text-sm text-zinc-500">Created by {rfq.createdBy.name}</span>
           </div>
           <dl className="mt-5 grid gap-4 text-sm md:grid-cols-2">
@@ -86,6 +91,10 @@ export default async function RFQDetailPage({
             <div>
               <dt className="font-medium text-zinc-500">Requester</dt>
               <dd className="mt-1 text-zinc-950">{rfq.requesterName}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-zinc-500">RFQ category</dt>
+              <dd className="mt-1 text-zinc-950">{formatStatus(rfq.rfqType)}</dd>
             </div>
             <div>
               <dt className="font-medium text-zinc-500">RFQ date</dt>
@@ -111,6 +120,18 @@ export default async function RFQDetailPage({
               <dt className="font-medium text-zinc-500">Warranty</dt>
               <dd className="mt-1 text-zinc-950">{rfq.warrantyRequirement ?? "-"}</dd>
             </div>
+            <div>
+              <dt className="font-medium text-zinc-500">SAP reference</dt>
+              <dd className="mt-1 text-zinc-950">{rfq.sapReferenceNumber ?? "-"}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-zinc-500">Integration status</dt>
+              <dd className="mt-1 text-zinc-950">{formatStatus(rfq.integrationStatus)}</dd>
+            </div>
+            <div className="md:col-span-2">
+              <dt className="font-medium text-zinc-500">Special vendor justification</dt>
+              <dd className="mt-1 whitespace-pre-wrap text-zinc-950">{rfq.specialVendorJustification ?? "-"}</dd>
+            </div>
             <div className="md:col-span-2">
               <dt className="font-medium text-zinc-500">Technical specification</dt>
               <dd className="mt-1 whitespace-pre-wrap text-zinc-950">{rfq.technicalSpecification ?? "-"}</dd>
@@ -119,6 +140,21 @@ export default async function RFQDetailPage({
         </section>
 
         <section className="space-y-4">
+          {canApproveRFQ && rfq.rfqApprovalStatus === "PENDING" ? (
+            <form action={approveRFQForReleaseAction} className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
+              <input type="hidden" name="rfqId" value={rfq.id} />
+              <div className="text-sm font-semibold text-zinc-950">RFQ release approval</div>
+              <p className="mt-1 text-sm text-zinc-600">
+                Approval allows buyer users to release this RFQ to selected vendors.
+              </p>
+              <div className="mt-4">
+                <ConfirmSubmitButton message="Approve this RFQ for vendor release?">
+                  Approve RFQ release
+                </ConfirmSubmitButton>
+              </div>
+            </form>
+          ) : null}
+
           {canManageRfqs ? (
           <form action={changeRFQStatusAction} className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
             <input type="hidden" name="rfqId" value={rfq.id} />
@@ -144,7 +180,25 @@ export default async function RFQDetailPage({
                 <input className={inputClass} name="poNumber" defaultValue={rfq.poNumber ?? ""} />
               </Field>
               <div className="mt-4">
-                <ConfirmSubmitButton message="Mark PO created for this RFQ?">Record SAP PO</ConfirmSubmitButton>
+                <Field label="SAP reference number">
+                  <input className={inputClass} name="sapReferenceNumber" defaultValue={rfq.sapReferenceNumber ?? ""} />
+                </Field>
+              </div>
+              <div className="mt-4">
+                <Field label="Integration status">
+                  <select className={selectClass} name="integrationStatus" defaultValue={rfq.integrationStatus}>
+                    <option value="NOT_READY">Not ready</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="SENT">Sent</option>
+                    <option value="FAILED">Failed</option>
+                    <option value="SYNCED">Synced</option>
+                  </select>
+                </Field>
+              </div>
+              <div className="mt-4">
+                <ConfirmSubmitButton message="Update SAP readiness fields for this RFQ?">
+                  Save SAP readiness
+                </ConfirmSubmitButton>
               </div>
             </form>
           ) : null}

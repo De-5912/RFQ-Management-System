@@ -12,8 +12,7 @@ export default async function VendorDashboardPage() {
   await lockExpiredQuotations();
   const where = vendorRfqWhere(user);
 
-  const [assigned, pending, submitted, rfqs] = await Promise.all([
-    prisma.rFQ.count({ where }),
+  const [pending, submitted, awarded, rfqs] = await Promise.all([
     prisma.rFQ.count({
       where: {
         ...where,
@@ -22,6 +21,7 @@ export default async function VendorDashboardPage() {
       },
     }),
     prisma.quotation.count({ where: { vendorId: user.vendorId ?? "__none__" } }),
+    prisma.rFQ.count({ where: { ...where, finalVendorId: user.vendorId ?? "__none__" } }),
     prisma.rFQ.findMany({
       where,
       orderBy: { deadline: "asc" },
@@ -39,14 +39,14 @@ export default async function VendorDashboardPage() {
         description="Assigned RFQs, submission deadlines, quotation status, and your quotation history."
       />
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard label="Assigned RFQs" value={assigned} href="/vendor/rfqs" />
-        <StatCard label="Pending quotes" value={pending} href="/vendor/rfqs" />
-        <StatCard label="Submitted quotes" value={submitted} href="/vendor/quotations" />
+        <StatCard label="RFQs awaiting quote" value={pending} href="/vendor/rfqs" />
+        <StatCard label="Quotes submitted" value={submitted} href="/vendor/quotations" />
+        <StatCard label="RFQs awarded" value={awarded} href="/vendor/rfqs" />
       </div>
 
       <section className="rounded-lg border border-zinc-200 bg-white shadow-sm">
         <div className="border-b border-zinc-200 px-5 py-4">
-          <h2 className="font-semibold text-zinc-950">Upcoming RFQs</h2>
+          <h2 className="font-semibold text-zinc-950">Pending RFQs and quote status</h2>
         </div>
         <div className="divide-y divide-zinc-100">
           {rfqs.map((rfq) => {

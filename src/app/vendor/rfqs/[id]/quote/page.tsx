@@ -1,8 +1,8 @@
 import { submitQuotationAction } from "@/app/actions/rfqs";
-import { SubmitButton } from "@/components/submit-button";
 import { Field, inputClass, PageHeader, selectClass, textareaClass } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { formatStatus, isPast } from "@/lib/format";
+import { paymentTermOptions } from "@/lib/master-data";
 import { prisma } from "@/lib/prisma";
 import { vendorRfqWhere } from "@/lib/rfq-access";
 import { lockExpiredQuotations } from "@/lib/quotation-locks";
@@ -112,6 +112,16 @@ export default async function QuotePage({
 
         <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
           <div className="grid gap-4 md:grid-cols-3">
+            <Field label="Availability">
+              <select className={selectClass} name="availability" defaultValue={quote?.availability ?? "AVAILABLE"}>
+                <option value="AVAILABLE">Available</option>
+                <option value="PARTIALLY_AVAILABLE">Partially Available</option>
+                <option value="NOT_AVAILABLE">Not Available</option>
+              </select>
+            </Field>
+            <Field label="Quantity offered">
+              <input className={inputClass} type="number" step="0.001" min="0" name="quantityOffered" defaultValue={quote?.quantityOffered?.toString() ?? ""} />
+            </Field>
             <Field label="Freight/transport cost">
               <input className={inputClass} type="number" step="0.01" min="0" name="freightCost" defaultValue={quote?.freightCost.toString() ?? "0"} />
             </Field>
@@ -125,10 +135,37 @@ export default async function QuotePage({
               <input className={inputClass} type="number" min="0" name="leadTimeDays" defaultValue={quote?.leadTimeDays ?? ""} />
             </Field>
             <Field label="Payment terms">
-              <input className={inputClass} name="paymentTerms" defaultValue={quote?.paymentTerms ?? ""} />
+              <select className={selectClass} name="paymentTerms" defaultValue={quote?.paymentTerms ?? paymentTermOptions[3]}>
+                {paymentTermOptions.map((term) => (
+                  <option key={term} value={term}>
+                    {term}
+                  </option>
+                ))}
+              </select>
             </Field>
             <Field label="Warranty">
               <input className={inputClass} name="warranty" defaultValue={quote?.warranty ?? ""} />
+            </Field>
+            <Field label="GST">
+              <input className={inputClass} type="number" step="0.01" min="0" name="taxTotal" defaultValue={quote?.taxTotal.toString() ?? "0"} />
+            </Field>
+            <Field label="Tax code">
+              <input className={inputClass} name="taxCode" defaultValue={quote?.taxCode ?? ""} />
+            </Field>
+            <Field label="HSN">
+              <input className={inputClass} name="hsn" defaultValue={quote?.hsn ?? ""} />
+            </Field>
+            <Field label="HSC">
+              <input className={inputClass} name="hsc" defaultValue={quote?.hsc ?? ""} />
+            </Field>
+            <Field label="Import duty">
+              <input className={inputClass} type="number" step="0.01" min="0" name="importDuty" defaultValue={quote?.importDuty.toString() ?? "0"} />
+            </Field>
+            <Field label="Retention">
+              <input className={inputClass} name="retention" defaultValue={quote?.retention ?? ""} />
+            </Field>
+            <Field label="Bank guarantee">
+              <input className={inputClass} name="bankGuarantee" defaultValue={quote?.bankGuarantee ?? ""} />
             </Field>
             <Field label="Validity date">
               <input className={inputClass} type="date" name="validityDate" defaultValue={quote?.validityDate?.toISOString().slice(0, 10) ?? ""} />
@@ -144,14 +181,37 @@ export default async function QuotePage({
             <Field label="Quotation attachment">
               <input className="block w-full rounded-md border border-zinc-300 bg-white text-sm text-zinc-700 file:mr-4 file:h-10 file:border-0 file:bg-zinc-950 file:px-4 file:text-sm file:font-semibold file:text-white" type="file" name="attachment" />
             </Field>
+            <Field label="Supporting documents">
+              <input className="block w-full rounded-md border border-zinc-300 bg-white text-sm text-zinc-700 file:mr-4 file:h-10 file:border-0 file:bg-zinc-950 file:px-4 file:text-sm file:font-semibold file:text-white" type="file" name="supportingAttachment" />
+            </Field>
+            <div className="md:col-span-3">
+              <Field label="Other commercial terms">
+                <textarea className={textareaClass} name="otherCommercialTerms" defaultValue={quote?.otherCommercialTerms ?? ""} />
+              </Field>
+            </div>
             <div className="md:col-span-3">
               <Field label="Remarks">
                 <textarea className={textareaClass} name="remarks" defaultValue={quote?.remarks ?? ""} />
               </Field>
             </div>
           </div>
-          <div className="mt-5 flex justify-end">
-            <SubmitButton>{quote ? "Save quotation" : "Submit quotation"}</SubmitButton>
+          <div className="mt-5 flex flex-wrap justify-end gap-3">
+            <button
+              type="submit"
+              name="intent"
+              value="draft"
+              className="inline-flex h-10 items-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-800 hover:bg-zinc-50"
+            >
+              Save Draft
+            </button>
+            <button
+              type="submit"
+              name="intent"
+              value="submit"
+              className="inline-flex h-10 items-center rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white hover:bg-zinc-800"
+            >
+              Submit Quote
+            </button>
           </div>
         </section>
       </form>
