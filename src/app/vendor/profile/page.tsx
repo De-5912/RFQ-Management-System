@@ -19,10 +19,15 @@ export default async function VendorProfilePage() {
             <Badge tone={statusTone(vendor.approvedStatus)}>{formatStatus(vendor.approvedStatus)}</Badge>
           </div>
           <dl className="mt-5 grid gap-4 text-sm md:grid-cols-2">
-            <div><dt className="font-medium text-zinc-500">Contact</dt><dd>{vendor.contactPerson}</dd></div>
-            <div><dt className="font-medium text-zinc-500">Email</dt><dd>{vendor.email}</dd></div>
-            <div><dt className="font-medium text-zinc-500">Phone</dt><dd>{vendor.phone}</dd></div>
+            <div><dt className="font-medium text-zinc-500">Vendor code</dt><dd>{vendor.vendorCode ?? "-"}</dd></div>
+            <div><dt className="font-medium text-zinc-500">Vendor type</dt><dd>{formatStatus(vendor.vendorType)}</dd></div>
+            <div><dt className="font-medium text-zinc-500">Primary contact</dt><dd>{vendor.primaryContactName ?? vendor.contactPerson}</dd></div>
+            <div><dt className="font-medium text-zinc-500">Primary email</dt><dd>{vendor.primaryContactEmail ?? vendor.email}</dd></div>
+            <div><dt className="font-medium text-zinc-500">Primary mobile</dt><dd>{vendor.primaryContactMobile ?? vendor.phone}</dd></div>
+            <div><dt className="font-medium text-zinc-500">Secondary contact</dt><dd>{vendor.secondaryContactName ?? "-"}</dd></div>
+            <div><dt className="font-medium text-zinc-500">Secondary email</dt><dd>{vendor.secondaryContactEmail ?? "-"}</dd></div>
             <div><dt className="font-medium text-zinc-500">Category</dt><dd>{vendor.category}</dd></div>
+            <div><dt className="font-medium text-zinc-500">Product / service</dt><dd>{vendor.productCategory ?? "-"} / {vendor.serviceCategory ?? "-"}</dd></div>
             <div><dt className="font-medium text-zinc-500">GST</dt><dd>{vendor.gstNumber ?? "-"}</dd></div>
             <div><dt className="font-medium text-zinc-500">PAN</dt><dd>{vendor.pan ?? "-"}</dd></div>
             <div><dt className="font-medium text-zinc-500">Payment terms</dt><dd>{vendor.paymentTerms ?? "-"}</dd></div>

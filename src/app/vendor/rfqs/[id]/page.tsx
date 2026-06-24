@@ -65,13 +65,16 @@ export default async function VendorRFQDetailPage({
             <Badge tone={locked ? "slate" : "green"}>{locked ? "Quotation locked" : "Editable before deadline"}</Badge>
           </div>
           <dl className="mt-5 grid gap-4 text-sm md:grid-cols-2">
+            <div><dt className="font-medium text-zinc-500">RFQ date</dt><dd>{formatDate(rfq.rfqDate)}</dd></div>
             <div><dt className="font-medium text-zinc-500">Department</dt><dd>{rfq.department}</dd></div>
             <div><dt className="font-medium text-zinc-500">Requester</dt><dd>{rfq.requesterName}</dd></div>
             <div><dt className="font-medium text-zinc-500">Deadline</dt><dd>{formatDateTime(rfq.deadline)}</dd></div>
             <div><dt className="font-medium text-zinc-500">Required delivery</dt><dd>{formatDate(rfq.requiredDeliveryDate)}</dd></div>
             <div><dt className="font-medium text-zinc-500">Delivery location</dt><dd>{rfq.deliveryLocation}</dd></div>
             <div><dt className="font-medium text-zinc-500">Payment terms</dt><dd>{rfq.paymentTerms ?? "-"}</dd></div>
+            <div><dt className="font-medium text-zinc-500">Warranty requirement</dt><dd>{rfq.warrantyRequirement ?? "-"}</dd></div>
             <div className="md:col-span-2"><dt className="font-medium text-zinc-500">Specification</dt><dd className="whitespace-pre-wrap">{rfq.technicalSpecification ?? "-"}</dd></div>
+            <div className="md:col-span-2"><dt className="font-medium text-zinc-500">Remarks</dt><dd className="whitespace-pre-wrap">{rfq.remarks ?? "-"}</dd></div>
           </dl>
         </section>
         <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
@@ -79,6 +82,7 @@ export default async function VendorRFQDetailPage({
           {quote ? (
             <div className="mt-4 space-y-2 text-sm">
               <div className="flex justify-between"><span>Status</span><Badge tone={statusTone(quote.status)}>{formatStatus(quote.status)}</Badge></div>
+              <div className="flex justify-between"><span>Availability</span><span>{formatStatus(quote.availability)}</span></div>
               <div className="flex justify-between"><span>Base total</span><span className="font-semibold">{formatMoney(quote.baseTotal)}</span></div>
               <div className="flex justify-between"><span>Lead time</span><span>{quote.leadTimeDays ?? "-"} days</span></div>
               <div className="flex justify-between"><span>Last edited</span><span>{formatDateTime(quote.lastEditedAt)}</span></div>
@@ -142,7 +146,7 @@ export default async function VendorRFQDetailPage({
 
       {rfq.attachments.length ? (
         <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
-          <h2 className="font-semibold text-zinc-950">RFQ attachments</h2>
+          <h2 className="font-semibold text-zinc-950">Technical specification downloads</h2>
           <div className="mt-3 space-y-2 text-sm">
             {rfq.attachments.map((file) => (
               <Link key={file.id} href={`/api/attachments/${file.id}`} className="block text-zinc-700 hover:underline">

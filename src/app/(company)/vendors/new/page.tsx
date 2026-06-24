@@ -8,20 +8,46 @@ export default async function NewVendorPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Create Vendor" description="Add local vendor master data for RFQ assignment and quotation comparison." />
-      <form action={createVendorAction} className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
+      <PageHeader title="Create Vendor Master Record" description="Add local vendor master data, contacts, commercial details, and documents for RFQ participation." />
+      <form action={createVendorAction} encType="multipart/form-data" className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
         <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Vendor code">
+            <input className={inputClass} name="vendorCode" placeholder="Auto-generated if blank" />
+          </Field>
           <Field label="Company name">
             <input className={inputClass} name="companyName" required />
           </Field>
-          <Field label="Contact person">
-            <input className={inputClass} name="contactPerson" required />
+          <Field label="Vendor type">
+            <select className={selectClass} name="vendorType" defaultValue="REGULAR_VENDOR">
+              <option value="REGULAR_VENDOR">Regular Vendor</option>
+              <option value="OEM">OEM</option>
+              <option value="AUTHORIZED_VENDOR">Authorized Vendor</option>
+              <option value="CUSTOMIZED_VENDOR">Customized Vendor</option>
+            </select>
           </Field>
-          <Field label="Email">
-            <input className={inputClass} type="email" name="email" required />
+          <Field label="Primary contact name">
+            <input className={inputClass} name="primaryContactName" required />
           </Field>
-          <Field label="Phone">
-            <input className={inputClass} name="phone" required />
+          <Field label="Primary designation">
+            <input className={inputClass} name="primaryContactDesignation" />
+          </Field>
+          <Field label="Primary mobile">
+            <input className={inputClass} name="primaryContactMobile" required />
+          </Field>
+          <Field label="Primary email">
+            <input className={inputClass} type="email" name="primaryContactEmail" required />
+          </Field>
+          <Field label="Secondary contact name">
+            <input className={inputClass} name="secondaryContactName" />
+          </Field>
+          <Field label="Secondary designation">
+            <input className={inputClass} name="secondaryContactDesignation" />
+          </Field>
+          <Field label="Secondary mobile">
+            <input className={inputClass} name="secondaryContactMobile" />
+          </Field>
+          <Field label="Secondary email">
+            <input className={inputClass} type="email" name="secondaryContactEmail" />
           </Field>
           <Field label="GST number">
             <input className={inputClass} name="gstNumber" />
@@ -29,8 +55,14 @@ export default async function NewVendorPage() {
           <Field label="PAN">
             <input className={inputClass} name="pan" />
           </Field>
-          <Field label="Category">
-            <input className={inputClass} name="category" required />
+          <Field label="Business category">
+            <input className={inputClass} name="businessCategory" required />
+          </Field>
+          <Field label="Product category">
+            <input className={inputClass} name="productCategory" />
+          </Field>
+          <Field label="Service category">
+            <input className={inputClass} name="serviceCategory" />
           </Field>
           <Field label="Approved status">
             <select className={selectClass} name="approvedStatus" defaultValue="PENDING">
@@ -46,9 +78,26 @@ export default async function NewVendorPage() {
           <Field label="Payment terms">
             <input className={inputClass} name="paymentTerms" />
           </Field>
+          <Field label="City">
+            <input className={inputClass} name="city" />
+          </Field>
+          <Field label="State">
+            <input className={inputClass} name="state" />
+          </Field>
+          <Field label="Country">
+            <input className={inputClass} name="country" defaultValue="India" />
+          </Field>
+          <Field label="PIN code">
+            <input className={inputClass} name="pinCode" />
+          </Field>
           <div className="md:col-span-2">
             <Field label="Address">
               <textarea className={textareaClass} name="address" required />
+            </Field>
+          </div>
+          <div className="md:col-span-2">
+            <Field label="Bank details">
+              <textarea className={textareaClass} name="bankDetails" />
             </Field>
           </div>
           <div className="md:col-span-2">
@@ -56,6 +105,18 @@ export default async function NewVendorPage() {
               <textarea className={textareaClass} name="leadTimeHistory" />
             </Field>
           </div>
+          <Field label="GST certificate">
+            <input className="block w-full text-sm" type="file" name="gstCertificate" />
+          </Field>
+          <Field label="PAN copy">
+            <input className="block w-full text-sm" type="file" name="panCopy" />
+          </Field>
+          <Field label="Registration documents">
+            <input className="block w-full text-sm" type="file" name="registrationDocuments" />
+          </Field>
+          <Field label="Other supporting documents">
+            <input className="block w-full text-sm" type="file" name="supportingDocuments" />
+          </Field>
         </div>
         <div className="mt-5 flex justify-end">
           <SubmitButton>Create vendor</SubmitButton>

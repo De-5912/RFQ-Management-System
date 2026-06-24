@@ -4,20 +4,18 @@ import { SubmitButton } from "@/components/submit-button";
 import { Badge, Field, inputClass, PageHeader, selectClass } from "@/components/ui";
 import { requirePermission } from "@/lib/auth";
 import { formatRole } from "@/lib/format";
+import { roleDefinitions } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 
-const roles: Role[] = [
-  "ADMIN",
-  "PURCHASE_EXECUTIVE",
-  "PURCHASE_MANAGER",
-  "HOD",
-  "FINANCE",
-  "DEPARTMENT_REQUESTER",
-  "VENDOR",
-];
+const roles = roleDefinitions.map((role) => role.key as Role);
 
-export default async function UsersPage() {
+export default async function UsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   await requirePermission("manage_users");
+  const { error } = await searchParams;
   const [users, vendors] = await Promise.all([
     prisma.user.findMany({ orderBy: { createdAt: "desc" }, include: { vendor: true } }),
     prisma.vendor.findMany({ where: { deletedAt: null }, orderBy: { companyName: "asc" } }),
@@ -29,6 +27,11 @@ export default async function UsersPage() {
         title="Users & Roles"
         description="Create local users and assign procurement roles. Permission rules remain centralized for later workflow tuning."
       />
+      {error === "company-domain" ? (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          Employee email does not match the configured company email domain.
+        </div>
+      ) : null}
       <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
         <h2 className="font-semibold text-zinc-950">Create user</h2>
         <form action={createUserAction} className="mt-4 grid gap-4 md:grid-cols-3">
@@ -51,6 +54,9 @@ export default async function UsersPage() {
           <Field label="Department">
             <input className={inputClass} name="department" />
           </Field>
+          <Field label="Designation">
+            <input className={inputClass} name="designation" />
+          </Field>
           <Field label="Vendor link">
             <select className={selectClass} name="vendorId" defaultValue="">
               <option value="">None</option>
@@ -71,6 +77,7 @@ export default async function UsersPage() {
             <tr>
               <th className="px-5 py-3">User</th>
               <th className="px-5 py-3">Role</th>
+              <th className="px-5 py-3">Category</th>
               <th className="px-5 py-3">Department</th>
               <th className="px-5 py-3">Vendor</th>
               <th className="px-5 py-3">Status</th>
@@ -84,6 +91,7 @@ export default async function UsersPage() {
                   <div className="text-xs text-zinc-500">{user.email}</div>
                 </td>
                 <td className="px-5 py-3">{formatRole(user.role)}</td>
+                <td className="px-5 py-3">{user.category === "VENDOR" ? "Vendor" : "Company Employee"}</td>
                 <td className="px-5 py-3">{user.department ?? "-"}</td>
                 <td className="px-5 py-3">{user.vendor?.companyName ?? "-"}</td>
                 <td className="px-5 py-3">

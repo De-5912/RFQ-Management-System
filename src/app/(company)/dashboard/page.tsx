@@ -10,9 +10,12 @@ import { companyRfqWhere } from "@/lib/rfq-access";
 export default async function DashboardPage() {
   const user = await requireUser();
   const where = companyRfqWhere(user);
-  const canManageRfqs = can(user.role, "manage_rfqs");
+  const canCreateRfqs = can(user.role, "create_rfqs");
   const canManageVendors = can(user.role, "manage_vendors");
-  const canApprove = can(user.role, "approve_vendor_selection");
+  const canApprove =
+    can(user.role, "approve_rfqs") ||
+    can(user.role, "approve_comparison") ||
+    can(user.role, "approve_vendor_selection");
   const canDownloadReports = can(user.role, "download_reports");
   const canCompare = can(user.role, "view_comparison");
 
@@ -34,13 +37,13 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="RFQ Command Center"
-        description="Role-specific procurement view for RFQ preparation, vendor assignment, quotation tracking, comparison, approval, and PO follow-up."
+        title="RFQ Workflow Dashboard"
+        description="Your role-specific view for RFQ creation, release approval, vendor quotation tracking, comparison approval, and closure."
         actions={
-          canManageRfqs ? (
+          canCreateRfqs ? (
           <ButtonLink href="/rfqs/new">
             <ClipboardPlus className="h-4 w-4" />
-            Prepare RFQ
+            Create RFQ Request
           </ButtonLink>
           ) : null
         }
@@ -110,11 +113,11 @@ export default async function DashboardPage() {
       </section>
 
       <div className="grid gap-4 md:grid-cols-3">
-        {canManageRfqs ? (
+        {canCreateRfqs ? (
           <Link href="/rfqs/new" className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm hover:bg-zinc-50">
             <ClipboardPlus className="h-5 w-5 text-zinc-500" />
-            <div className="mt-3 font-semibold text-zinc-950">Prepare a new RFQ</div>
-            <p className="mt-1 text-sm text-zinc-600">Create RFQ header details, add item lines, and attach specifications.</p>
+            <div className="mt-3 font-semibold text-zinc-950">Create a new RFQ request</div>
+            <p className="mt-1 text-sm text-zinc-600">Enter the requirement, item lines, deadline, warranty, and technical attachments.</p>
           </Link>
         ) : null}
         {canManageVendors ? (

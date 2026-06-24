@@ -7,11 +7,14 @@ import { prisma } from "@/lib/prisma";
 
 export default async function RFQVendorsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   await requirePermission("assign_vendors");
   const { id } = await params;
+  const { error } = await searchParams;
   const [rfq, vendors] = await Promise.all([
     prisma.rFQ.findUnique({ where: { id }, include: { vendors: true } }),
     prisma.vendor.findMany({ where: { deletedAt: null }, orderBy: { companyName: "asc" } }),
@@ -24,9 +27,23 @@ export default async function RFQVendorsPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Assign and email vendors for ${rfq.rfqNumber}`}
-        description="Selected vendors are linked to this RFQ and RFQ emails are sent or locally logged through the email service."
+        title={`Release ${rfq.rfqNumber} to vendors`}
+        description="Normal RFQs require 3 to 10 vendors. OEM, authorized, or customized vendor RFQs may be released to a single vendor after RFQ approval."
       />
+      {rfq.rfqApprovalStatus !== "APPROVED" ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          RFQ release approval is pending. Vendor invitation emails are not available until HOD or HOS approval is recorded.
+        </div>
+      ) : null}
+      {error ? (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          {error === "normal-count"
+            ? "Select between 3 and 10 regular vendors for a normal RFQ."
+            : error === "special-max"
+              ? "Special RFQs can be released to one OEM, authorized, or customized vendor."
+              : "RFQ must be approved before vendor release."}
+        </div>
+      ) : null}
       <form action={assignVendorsAction} className="rounded-lg border border-zinc-200 bg-white shadow-sm">
         <input type="hidden" name="rfqId" value={rfq.id} />
         <div className="divide-y divide-zinc-100">
@@ -42,18 +59,22 @@ export default async function RFQVendorsPage({
                 />
                 <div>
                   <div className="font-semibold text-zinc-950">{vendor.companyName}</div>
-                  <div className="text-sm text-zinc-500">{vendor.email} / {vendor.category}</div>
+                  <div className="text-sm text-zinc-500">
+                    {vendor.primaryContactEmail || vendor.email} / {vendor.category} / {formatStatus(vendor.vendorType)}
+                  </div>
                 </div>
               </div>
               <Badge tone={statusTone(vendor.approvedStatus)}>{formatStatus(vendor.approvedStatus)}</Badge>
             </label>
           ))}
         </div>
+        {rfq.rfqApprovalStatus === "APPROVED" ? (
         <div className="flex items-center justify-end border-t border-zinc-200 px-5 py-4">
           <ConfirmSubmitButton message="Assign selected vendors and send/log RFQ emails?">
-            Assign and send RFQ
+            Release RFQ and send emails
           </ConfirmSubmitButton>
         </div>
+        ) : null}
       </form>
     </div>
   );

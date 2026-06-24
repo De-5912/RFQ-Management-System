@@ -23,6 +23,7 @@ export default async function VendorQuotationsPage() {
             <tr>
               <th className="px-5 py-3">RFQ</th>
               <th className="px-5 py-3">Base total</th>
+              <th className="px-5 py-3">Availability</th>
               <th className="px-5 py-3">Lead time</th>
               <th className="px-5 py-3">Submitted</th>
               <th className="px-5 py-3">Last edited</th>
@@ -39,6 +40,7 @@ export default async function VendorQuotationsPage() {
                   <div className="text-xs text-zinc-500">{quote.rfq.description}</div>
                 </td>
                 <td className="px-5 py-3 font-semibold">{formatMoney(quote.baseTotal)}</td>
+                <td className="px-5 py-3">{formatStatus(quote.availability)}</td>
                 <td className="px-5 py-3">{quote.leadTimeDays ?? "-"} days</td>
                 <td className="px-5 py-3">{formatDate(quote.submittedAt)}</td>
                 <td className="px-5 py-3">{formatDate(quote.lastEditedAt)}</td>
