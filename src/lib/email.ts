@@ -52,11 +52,18 @@ export async function sendRFQEmail({
   const appUrl = process.env.APP_URL || "http://localhost:3000";
   const portalUrl = `${appUrl}/vendor/rfqs/${rfq.id}`;
   const subject = `RFQ ${rfq.rfqNumber}: quotation requested by ${rfq.department}`;
+  const primaryEmail = vendor.primaryContactEmail || vendor.email;
+  const secondaryEmail =
+    vendor.secondaryContactEmail && vendor.secondaryContactEmail !== primaryEmail
+      ? vendor.secondaryContactEmail
+      : "";
+  const toEmails = [primaryEmail, secondaryEmail].filter(Boolean);
+  const contactName = vendor.primaryContactName || vendor.contactPerson;
   const itemLines = rfq.items
     .map((item) => `- ${item.description} | Qty: ${item.quantity} ${item.uom}`)
     .join("\n");
 
-  const body = `Dear ${vendor.contactPerson},
+  const body = `Dear ${contactName},
 
 You have been invited to quote for ${rfq.rfqNumber}.
 
@@ -77,7 +84,7 @@ Purchase Team`;
   try {
     const info = await getTransport().sendMail({
       from: process.env.EMAIL_FROM || "RFQ Management <rfq.local@example.com>",
-      to: vendor.email,
+      to: toEmails,
       subject,
       text: body,
     });
@@ -87,7 +94,7 @@ Purchase Team`;
       data: {
         rfqId,
         vendorId,
-        toEmail: vendor.email,
+        toEmail: toEmails.join(", "),
         subject,
         body,
         status,
@@ -106,7 +113,7 @@ Purchase Team`;
       action: "RFQ_EMAIL_SENT",
       entityType: "RFQ",
       entityId: rfqId,
-      details: `${status} email to ${vendor.email}`,
+      details: `${status} email to ${toEmails.join(", ")}`,
     });
 
     return emailLog;
@@ -115,7 +122,7 @@ Purchase Team`;
       data: {
         rfqId,
         vendorId,
-        toEmail: vendor.email,
+        toEmail: toEmails.join(", "),
         subject,
         body,
         status: "FAILED",
@@ -129,7 +136,7 @@ Purchase Team`;
       action: "RFQ_EMAIL_FAILED",
       entityType: "RFQ",
       entityId: rfqId,
-      details: `Email to ${vendor.email} failed`,
+      details: `Email to ${toEmails.join(", ")} failed`,
     });
 
     return emailLog;

@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { Role } from "@prisma/client";
+import { Role, UserCategory } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { can, Permission } from "@/lib/permissions";
 
@@ -12,6 +12,8 @@ export type CurrentUser = {
   name: string;
   email: string;
   role: Role;
+  roleKey: string | null;
+  category: UserCategory;
   department: string | null;
   vendorId: string | null;
   vendor?: { id: string; companyName: string } | null;
@@ -80,6 +82,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     name: session.user.name,
     email: session.user.email,
     role: session.user.role,
+    roleKey: session.user.roleKey,
+    category: session.user.category,
     department: session.user.department,
     vendorId: session.user.vendorId,
     vendor: session.user.vendor,
@@ -90,7 +94,7 @@ export async function requireUser(allowedRoles?: Role[]) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    redirect(user.role === "VENDOR" ? "/vendor/dashboard" : "/dashboard");
+    redirect(user.category === "VENDOR" ? "/vendor/dashboard" : "/dashboard");
   }
   return user;
 }
@@ -98,7 +102,7 @@ export async function requireUser(allowedRoles?: Role[]) {
 export async function requirePermission(permission: Permission) {
   const user = await requireUser();
   if (!can(user.role, permission)) {
-    redirect(user.role === "VENDOR" ? "/vendor/dashboard" : "/dashboard");
+    redirect(user.category === "VENDOR" ? "/vendor/dashboard" : "/dashboard");
   }
   return user;
 }

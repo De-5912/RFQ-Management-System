@@ -20,6 +20,8 @@ export async function saveAttachment({
   rfqId,
   quotationId,
   approvalId,
+  vendorId,
+  vendorRegistrationId,
   user,
 }: {
   file: File | null;
@@ -27,6 +29,8 @@ export async function saveAttachment({
   rfqId?: string;
   quotationId?: string;
   approvalId?: string;
+  vendorId?: string;
+  vendorRegistrationId?: string;
   user?: CurrentUser | null;
 }) {
   if (!file || file.size === 0) return null;
@@ -54,6 +58,8 @@ export async function saveAttachment({
       rfqId,
       quotationId,
       approvalId,
+      vendorId,
+      vendorRegistrationId,
       uploadedById: user?.id,
     },
   });

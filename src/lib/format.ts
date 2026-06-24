@@ -1,11 +1,18 @@
 import {
   ApprovalStatus,
+  AvailabilityStatus,
+  ComparisonApprovalStage,
   EmailStatus,
+  ComparisonStatus,
+  IntegrationStatus,
   QuotationStatus,
+  RFQApprovalStatus,
   RFQStatus,
+  RFQType,
   Role,
   TechnicalCompliance,
   VendorApprovalStatus,
+  VendorType,
 } from "@prisma/client";
 
 export function formatRole(role: Role) {
@@ -21,9 +28,16 @@ export function formatStatus(
     | RFQStatus
     | QuotationStatus
     | ApprovalStatus
+    | AvailabilityStatus
     | VendorApprovalStatus
     | TechnicalCompliance
-    | EmailStatus,
+    | EmailStatus
+    | RFQApprovalStatus
+    | ComparisonStatus
+    | ComparisonApprovalStage
+    | RFQType
+    | IntegrationStatus
+    | VendorType,
 ) {
   return status
     .toLowerCase()
